@@ -59,6 +59,7 @@
         <div class="text-3xl">🎫</div>
         <h2 class="text-lg font-bold text-emerald-800">บัตรคิวอิเล็กทรอนิกส์ (รอยืนยัน)</h2>
         <p id="bookingSuccessDetail" class="text-sm text-emerald-700"></p>
+        <div id="lineVerifyNotice" class="bg-purple-50 border border-purple-200 rounded-xl p-3 text-xs text-purple-900 space-y-2"></div>
         <div id="ticketActions" class="flex flex-wrap justify-center gap-2 pt-1"></div>
         <button onclick="resetBookingForm()" class="mt-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium">จองคิวเพิ่ม</button>
       </div>
@@ -776,6 +777,18 @@
           ('คุณ ' + (payload.patient_name) + ' | วันที่ ' + (payload.appointment_date) + ' เวลา ' + (payload.appointment_time) + ' น. (' + (payload.services) + ')');
         window._lastBookedItem = payload;
         document.getElementById('ticketActions').innerHTML = buildTicketButtons(-1);
+        const verifyBox = document.getElementById('lineVerifyNotice');
+        if (verifyBox) {
+          const cleanTel = String(payload.phone || '').trim();
+          window._lastOaUrl = 'https://line.me/R/oaMessage/@157yyxrg/?' + encodeURIComponent(cleanTel);
+          if (appState.lineUserId) {
+            verifyBox.innerHTML = '<div>🟢 เชื่อมต่อ LINE เรียบร้อยแล้ว ระบบจะส่งแจ้งเตือนสถานะคิวเข้าแชท LINE ของคุณอัตโนมัติครับ</div>';
+          } else {
+            verifyBox.innerHTML =
+              '<div class="font-semibold">📲 ขั้นตอนสุดท้าย: กรุณาพิมพ์เบอร์โทรศัพท์ <b>' + cleanTel + '</b> ตอบกลับในแชท LINE OA เพื่อผูกบัญชีและรับแจ้งเตือนสถานะการจองคิวครับ</div>' +
+              '<button type="button" onclick="openOaVerifyChat()" class="mt-1 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">💬 เปิดแชท LINE ส่งเบอร์ยืนยัน</button>';
+          }
+        }
         loadMyAppointments();
       }, function(err) { btn.disabled = false; btn.textContent = 'ยืนยันการจองคิวนัดหมาย'; showAlert('error', 'เชื่อมต่อไม่สำเร็จ', String(err)); });
     }
@@ -798,6 +811,10 @@
       const text = encodeURIComponent(('นัดหมายทันตกรรม (' + (item.services || 'คลินิกทันตกรรม') + ')'));
       const loc = encodeURIComponent(appState.settings.site_subtitle || 'รพ.สต.บ้านปวงคำ');
       return ('https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + (text) + '&dates=' + (dates) + '&ctz=Asia/Bangkok&location=' + (loc));
+    }
+
+    function openOaVerifyChat() {
+      if (window._lastOaUrl) window.open(window._lastOaUrl, '_blank');
     }
 
     function openClinicMap() {
