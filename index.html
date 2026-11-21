@@ -309,7 +309,17 @@
               </div>
               <button type="button" onclick="openPatientModal(-1)" class="px-3.5 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-semibold">➕ เพิ่มผู้ป่วย</button>
             </div>
-            <input type="text" id="ptSearchInput" oninput="renderAdminPatients()" placeholder="ค้นหาชื่อ / เบอร์โทรผู้ป่วย..." class="w-full rounded-xl border border-slate-200 px-3 py-2 outline-none">
+            <div class="grid sm:grid-cols-2 gap-2">
+              <input type="text" id="ptSearchInput" oninput="renderAdminPatients()" placeholder="ค้นหาชื่อ / เบอร์โทรผู้ป่วย..." class="w-full rounded-xl border border-slate-200 px-3 py-2 outline-none">
+              <select id="ptGroupFilter" onchange="renderAdminPatients()" class="w-full rounded-xl border border-slate-200 px-3 py-2 bg-white outline-none">
+                <option value="">ทุกกลุ่มเป้าหมาย</option>
+                <option value="ทั่วไป">ทั่วไป</option>
+                <option value="หญิงตั้งครรภ์">🤰 หญิงตั้งครรภ์</option>
+                <option value="ผู้สูงอายุ">👴 ผู้สูงอายุ</option>
+                <option value="ผู้ป่วยเบาหวาน">🩺 ผู้ป่วยเบาหวาน</option>
+                <option value="เด็กวัยเรียน">🧒 เด็กวัยเรียน</option>
+              </select>
+            </div>
             <div id="adminPatientsList" class="space-y-2 max-h-[420px] overflow-y-auto"></div>
           </div>
 
@@ -427,6 +437,10 @@
               <select id="bcMode" class="w-full rounded-xl border border-slate-200 px-3 py-2 bg-white">
                 <option value="all">เพื่อนทุกคนใน LINE OA (Broadcast ทั้งหมด)</option>
                 <option value="patients">เฉพาะคนไข้ที่เคยจองคิวผ่าน LINE (Multicast)</option>
+                <option value="group:หญิงตั้งครรภ์">เฉพาะกลุ่มเป้าหมาย: 🤰 หญิงตั้งครรภ์</option>
+                <option value="group:ผู้สูงอายุ">เฉพาะกลุ่มเป้าหมาย: 👴 ผู้สูงอายุ</option>
+                <option value="group:ผู้ป่วยเบาหวาน">เฉพาะกลุ่มเป้าหมาย: 🩺 ผู้ป่วยเบาหวาน</option>
+                <option value="group:เด็กวัยเรียน">เฉพาะกลุ่มเป้าหมาย: 🧒 เด็กวัยเรียน</option>
               </select>
             </div>
             <div>
@@ -1421,7 +1435,7 @@
       window._adminFiltered = filtered.slice(0, 80);
       container.innerHTML = window._adminFiltered.map((a, aIdx) => {
         const safeId = String(a.id || '').replace(/'/g, '');
-        return ('         <div class="border border-slate-200 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">           <div class="space-y-0.5">             <div class="flex flex-wrap items-center gap-1.5">               <span class="font-bold text-sm text-slate-800">' + (a.patient_name) + '</span>               ' + (statusBadge[a.status] || a.status) + '               ' + (a.has_line ? '<span class="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded">LINE</span>' : '') + '             </div>             <div class="text-slate-600">📅 ' + (a.appointment_date) + ' ⏰ ' + (a.appointment_time) + ' น. | 📱 ' + (a.phone) + '</div>             <div class="text-slate-500">🦷 ' + (a.services) + (a.other_service ? (' (' + a.other_service + ')') : '') + ' | ' + (a.treatment_right) + '</div>' + (a.dental_note ? ('<div class="text-purple-700 font-medium">📝 โน้ต: ' + a.dental_note + '</div>') : '') + '           </div>           <div class="flex flex-wrap gap-1.5">             <button type="button" onclick="openEditModal(' + aIdx + ')" class="px-2.5 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-800 text-white">✏️ แก้ไข</button>' + '<button type="button" onclick="setStatus(this, \'' + (safeId) + '\',\'confirmed\')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50">ยืนยัน</button>             <button type="button" onclick="setStatus(this, \'' + (safeId) + '\',\'completed\')" class="px-2.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50">เสร็จสิ้น</button>             <button type="button" onclick="setStatus(this, \'' + (safeId) + '\',\'cancelled\')" class="px-2.5 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 text-white disabled:opacity-50">ยกเลิก</button><button type="button" onclick="deleteBooking(' + aIdx + ')" class="px-2.5 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700">🗑️ ลบ</button>           </div>         </div>       ');
+        return ('         <div class="border border-slate-200 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">           <div class="space-y-0.5">             <div class="flex flex-wrap items-center gap-1.5">               <span class="font-bold text-sm text-slate-800">' + (a.patient_name) + '</span>               ' + (statusBadge[a.status] || a.status) + '               ' + (a.has_line ? '<span class="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded">LINE</span>' : '') + '             </div>             <div class="text-slate-600">📅 ' + (a.appointment_date) + ' ⏰ ' + (a.appointment_time) + ' น. | 📱 ' + (a.phone) + '</div>             <div class="text-slate-500">🦷 ' + (a.services) + (a.other_service ? (' (' + a.other_service + ')') : '') + ' | ' + (a.treatment_right) + '</div>' + (a.dental_note ? ('<div class="text-purple-700 font-medium">📝 โน้ต: ' + a.dental_note + '</div>') : '') + '           </div>           <div class="flex flex-wrap gap-1.5">             <button type="button" onclick="openEditModal(' + aIdx + ')" class="px-2.5 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-800 text-white">✏️ แก้ไข</button>' + '<button type="button" onclick="setStatus(this, \'' + (safeId) + '\',\'confirmed\')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50">ยืนยัน</button>             <button type="button" onclick="setStatus(this, \'' + (safeId) + '\',\'completed\')" class="px-2.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50">เสร็จสิ้น</button>             <button type="button" onclick="setStatus(this, \'' + (safeId) + '\',\'cancelled\')" class="px-2.5 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 text-white disabled:opacity-50">ยกเลิก</button><button type="button" onclick="deleteBooking(' + aIdx + ')" class="px-2.5 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700">🗑️ ลบ</button>' + (a.status === 'cancelled' ? ('<button type="button" onclick="announceSlot(' + aIdx + ')" class="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white">🔔 ประกาศคิวว่าง</button>') : '') + '           </div>         </div>       ');
       }).join('') || '<p class="text-center text-slate-400 py-6 text-xs">ไม่พบข้อมูล</p>';
     }
 
@@ -1484,6 +1498,26 @@
           loginAdmin();
           showAlert('success', 'บันทึกการแก้ไขแล้ว', res.lineNotified ? 'ส่งแจ้งเตือนเปลี่ยนวัน-เวลาทาง LINE ให้คนไข้แล้ว' : 'อัปเดตข้อมูลในชีตเรียบร้อย');
         }, function(err) { showAlert('error', 'เกิดข้อผิดพลาด', String(err)); });
+    }
+
+
+    async function announceSlot(idx) {
+      const a = (window._adminFiltered || [])[idx];
+      if (!a) return;
+      const cf = await Swal.fire({
+        icon: 'question',
+        title: 'ประกาศคิวว่างทาง LINE?',
+        text: 'ส่งแจ้งเตือนเพื่อนทุกคนใน LINE OA ว่าวันที่ ' + a.appointment_date + ' เวลา ' + a.appointment_time + ' น. มีคิวว่างหลุดมา 1 คิว',
+        showCancelButton: true,
+        confirmButtonText: 'ส่งประกาศเลย',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#d97706'
+      });
+      if (!cf.isConfirmed) return;
+      callApi('sendSlotAlert', { pin: appState.adminPin, id: a.id }, function(res) {
+        if (!res || !res.success) return showAlert('error', 'ส่งไม่สำเร็จ', res ? res.message : '');
+        showAlert('success', 'ประกาศคิวว่างเรียบร้อย!', res.info || '');
+      }, function(err) { showAlert('error', 'เกิดข้อผิดพลาด', String(err)); });
     }
 
     async function deleteBooking(idx) {
@@ -1673,7 +1707,9 @@
       if (!box) return;
       const q = (document.getElementById('ptSearchInput') ? document.getElementById('ptSearchInput').value : '').toLowerCase();
       const filtered = (appState.adminPatients || []).filter(function(p) {
-        return !q || (p.patient_name || '').toLowerCase().includes(q) || (p.phone || '').includes(q);
+        const g = document.getElementById('ptGroupFilter') ? document.getElementById('ptGroupFilter').value : '';
+        const matchG = !g || (p.target_group || 'ทั่วไป') === g;
+        return matchG && (!q || (p.patient_name || '').toLowerCase().includes(q) || (p.phone || '').includes(q));
       });
       window._adminPatientsFiltered = filtered.slice(0, 80);
       box.innerHTML = window._adminPatientsFiltered.map(function(p, idx) {
@@ -1682,7 +1718,7 @@
           : '<span class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">ยังไม่ผูก LINE</span>';
         return '<div class="border border-slate-200 rounded-2xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">' +
           '<div>' +
-            '<div class="flex items-center gap-1.5"><span class="font-bold text-sm text-slate-800">' + (p.patient_name || '-') + '</span>' + lineBadge + '</div>' +
+            '<div class="flex flex-wrap items-center gap-1.5"><span class="font-bold text-sm text-slate-800">' + (p.patient_name || '-') + '</span>' + lineBadge + (p.target_group ? ('<span class="text-[10px] bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded">' + p.target_group + '</span>') : '') + '</div>' +
             '<div class="text-slate-600">📱 ' + (p.phone || '-') + ' | 🏥 ' + (p.treatment_right || '-') + '</div>' +
             (p.medical_conditions ? ('<div class="text-slate-500">⚠️ ' + p.medical_conditions + '</div>') : '') +
           '</div>' +
@@ -1702,7 +1738,12 @@
           '<div><label class="font-semibold">เบอร์โทรศัพท์ *</label><input id="ptPhone" class="swal2-input !m-0 !mt-1 !w-full !text-sm" value="' + ((p && p.phone) || '').replace(/"/g, '&quot;') + '"></div>' +
           '<div><label class="font-semibold">สิทธิการรักษา</label><input id="ptRight" class="swal2-input !m-0 !mt-1 !w-full !text-sm" value="' + ((p && p.treatment_right) || '').replace(/"/g, '&quot;') + '"></div>' +
           '<div><label class="font-semibold">โรคประจำตัว / แพ้ยา</label><input id="ptMed" class="swal2-input !m-0 !mt-1 !w-full !text-sm" value="' + ((p && p.medical_conditions) || '').replace(/"/g, '&quot;') + '"></div>' +
-          '<div><label class="font-semibold">LINE User ID (ถ้ามี)</label><input id="ptLineUid" class="swal2-input !m-0 !mt-1 !w-full !text-sm" placeholder="U..." value="' + ((p && p.line_user_id) || '').replace(/"/g, '&quot;') + '"></div>' +
+          '<div><label class="font-semibold">กลุ่มเป้าหมาย</label><select id="ptTargetGroup" class="swal2-input !m-0 !mt-1 !w-full !text-sm !h-10">' +
+            ['ทั่วไป', 'หญิงตั้งครรภ์', 'ผู้สูงอายุ', 'ผู้ป่วยเบาหวาน', 'เด็กวัยเรียน'].map(function(opt) {
+              const sel = ((p && p.target_group) || 'ทั่วไป') === opt ? ' selected' : '';
+              return '<option value="' + opt + '"' + sel + '>' + opt + '</option>';
+            }).join('') +
+          '</select></div>' + '<div><label class="font-semibold">LINE User ID (ถ้ามี)</label><input id="ptLineUid" class="swal2-input !m-0 !mt-1 !w-full !text-sm" placeholder="U..." value="' + ((p && p.line_user_id) || '').replace(/"/g, '&quot;') + '"></div>' +
         '</div>';
       const res = await Swal.fire({
         title: idx >= 0 ? 'แก้ไขทะเบียนผู้ป่วย' : 'เพิ่มทะเบียนผู้ป่วย',
@@ -1717,6 +1758,7 @@
           phone: document.getElementById('ptPhone').value,
           treatment_right: document.getElementById('ptRight').value,
           medical_conditions: document.getElementById('ptMed').value,
+          target_group: document.getElementById('ptTargetGroup').value,
           line_user_id: document.getElementById('ptLineUid').value
         })
       });
