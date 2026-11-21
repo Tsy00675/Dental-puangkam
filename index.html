@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>ระบบจองคิวนัดหมายทันตกรรม</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js" async></script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" async></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" async></script>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
@@ -609,7 +609,14 @@
         loadMyAppointments();
         return;
       }
-      if (!INITIAL_LIFF_ID || typeof liff === 'undefined') return;
+      if (!INITIAL_LIFF_ID) return;
+      for (var w = 0; w < 20 && typeof liff === 'undefined'; w++) {
+        await new Promise(function(r) { setTimeout(r, 150); });
+      }
+      if (typeof liff === 'undefined') {
+        setLiffBanner('warn', '<span>⚠️ โหลด LINE SDK ไม่สำเร็จ ลองรีเฟรชหน้าใหม่อีกครั้งครับ</span>');
+        return;
+      }
       try {
         await Promise.race([
           liff.init({ liffId: INITIAL_LIFF_ID }),
