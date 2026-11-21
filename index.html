@@ -555,7 +555,7 @@
       adminAppointments: []
     };
 
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxgvEGjhizUi3BE_aGjyKk311NCvlWLjHMHA31-TKSHWewOa2Nz1b6OXUbPEVfPYQ5r/exec';
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbz8iz5aj3D5_D4L1iDzXyOEadj4pWADAh0AaqMWZ4j7_eox4d_kq9x9bqs_O0-Z90OH/exec';
     const INITIAL_LIFF_ID = '2012609917-vBlRgro4';
     const _urlParams = new URLSearchParams(window.location.search);
     const INITIAL_TAB = (_urlParams.get('tab') || 'booking').trim();
@@ -564,6 +564,7 @@
     function callApi(action, data, onOk, onErr) {
       fetch(GAS_API_URL, {
         method: 'POST',
+        redirect: 'follow',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action: action, data: data || {} })
       })
