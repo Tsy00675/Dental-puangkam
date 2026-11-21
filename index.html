@@ -267,6 +267,7 @@
           <div class="flex flex-col sm:flex-row gap-2.5 justify-between sm:items-center">
             <div class="flex gap-2">
               <button onclick="switchAdminSubTab('list')" id="sub-list" class="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-purple-700 text-white">รายการคิว</button>
+              <button onclick="switchAdminSubTab('patients')" id="sub-patients" class="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700">👥 ทะเบียนผู้ป่วย</button>
               <button onclick="switchAdminSubTab('holidays')" id="sub-holidays" class="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700">จัดการวันหยุด</button>
               <button onclick="switchAdminSubTab('stats')" id="sub-stats" class="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700">📊 สถิติ</button>
               <button onclick="switchAdminSubTab('workload')" id="sub-workload" class="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700">📋 ภาระงาน</button>
@@ -296,6 +297,19 @@
               </select>
             </div>
             <div id="adminAppointmentsList" class="space-y-2.5 max-h-[520px] overflow-y-auto"></div>
+          </div>
+
+          <!-- Sub-tab: Patients Registry -->
+          <div id="admin-sub-patients" class="hidden space-y-3 text-xs">
+            <div class="flex flex-wrap justify-between items-center gap-2 bg-purple-50 border border-purple-200 rounded-2xl p-3">
+              <div>
+                <div class="font-bold text-purple-900">👥 ทะเบียนผู้ป่วยผูก LINE</div>
+                <div class="text-purple-700">ผู้ป่วยสามารถพิมพ์เบอร์โทรในแชท LINE OA เพื่อผูกบัญชีอัตโนมัติ หรือเพิ่ม/แก้ไขได้ที่นี่</div>
+              </div>
+              <button type="button" onclick="openPatientModal(-1)" class="px-3.5 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-semibold">➕ เพิ่มผู้ป่วย</button>
+            </div>
+            <input type="text" id="ptSearchInput" oninput="renderAdminPatients()" placeholder="ค้นหาชื่อ / เบอร์โทรผู้ป่วย..." class="w-full rounded-xl border border-slate-200 px-3 py-2 outline-none">
+            <div id="adminPatientsList" class="space-y-2 max-h-[420px] overflow-y-auto"></div>
           </div>
 
           <!-- Sub-tab: Holidays -->
@@ -1082,6 +1096,7 @@
         appState.adminPin = pin;
         appState.adminAppointments = res.appointments || [];
         appState.holidays = res.holidays || [];
+        appState.adminPatients = res.patients || [];
 
         document.getElementById('adminLoginBox').classList.add('hidden');
         document.getElementById('adminPanel').classList.remove('hidden');
@@ -1106,6 +1121,7 @@
         document.getElementById('adminFbAvg').textContent = (res.feedbackAvg || '0.0') + ' / 5.0';
         renderAdminList();
         renderAdminHolidays();
+        renderAdminPatients();
         renderAdminFeedbacks();
       }, function(err) {
         if (btn) { btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ'; }
@@ -1114,7 +1130,7 @@
     }
 
     function switchAdminSubTab(name) {
-      ['list', 'holidays', 'stats', 'workload', 'broadcast', 'feedbacks', 'settings'].forEach(t => {
+      ['list', 'patients', 'holidays', 'stats', 'workload', 'broadcast', 'feedbacks', 'settings'].forEach(t => {
         document.getElementById('admin-sub-' + t).classList.toggle('hidden', t !== name);
         const btn = document.getElementById('sub-' + t);
         btn.className = t === name
@@ -1632,6 +1648,88 @@
       callApi('cancelScheduledBroadcast', { pin: appState.adminPin, id: id }, function(res) {
         if (res && res.success) loadBroadcastQueue();
       });
+    }
+
+
+    function renderAdminPatients() {
+      const box = document.getElementById('adminPatientsList');
+      if (!box) return;
+      const q = (document.getElementById('ptSearchInput') ? document.getElementById('ptSearchInput').value : '').toLowerCase();
+      const filtered = (appState.adminPatients || []).filter(function(p) {
+        return !q || (p.patient_name || '').toLowerCase().includes(q) || (p.phone || '').includes(q);
+      });
+      window._adminPatientsFiltered = filtered.slice(0, 80);
+      box.innerHTML = window._adminPatientsFiltered.map(function(p, idx) {
+        const lineBadge = p.line_user_id
+          ? '<span class="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded">ผูก LINE แล้ว</span>'
+          : '<span class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">ยังไม่ผูก LINE</span>';
+        return '<div class="border border-slate-200 rounded-2xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">' +
+          '<div>' +
+            '<div class="flex items-center gap-1.5"><span class="font-bold text-sm text-slate-800">' + (p.patient_name || '-') + '</span>' + lineBadge + '</div>' +
+            '<div class="text-slate-600">📱 ' + (p.phone || '-') + ' | 🏥 ' + (p.treatment_right || '-') + '</div>' +
+            (p.medical_conditions ? ('<div class="text-slate-500">⚠️ ' + p.medical_conditions + '</div>') : '') +
+          '</div>' +
+          '<div class="flex gap-1.5">' +
+            '<button type="button" onclick="openPatientModal(' + idx + ')" class="px-2.5 py-1.5 rounded-lg bg-purple-700 text-white">✏️ แก้ไข</button>' +
+            '<button type="button" onclick="deletePatientItem(' + idx + ')" class="px-2.5 py-1.5 rounded-lg bg-slate-200 text-slate-700">🗑️ ลบ</button>' +
+          '</div>' +
+        '</div>';
+      }).join('') || '<p class="text-center text-slate-400 py-6">ยังไม่มีทะเบียนผู้ป่วย</p>';
+    }
+
+    async function openPatientModal(idx) {
+      const p = idx >= 0 ? (window._adminPatientsFiltered || [])[idx] : {};
+      const htmlForm =
+        '<div class="space-y-2 text-left text-xs">' +
+          '<div><label class="font-semibold">ชื่อ - นามสกุล *</label><input id="ptName" class="swal2-input !m-0 !mt-1 !w-full !text-sm" value="' + ((p && p.patient_name) || '').replace(/"/g, '&quot;') + '"></div>' +
+          '<div><label class="font-semibold">เบอร์โทรศัพท์ *</label><input id="ptPhone" class="swal2-input !m-0 !mt-1 !w-full !text-sm" value="' + ((p && p.phone) || '').replace(/"/g, '&quot;') + '"></div>' +
+          '<div><label class="font-semibold">สิทธิการรักษา</label><input id="ptRight" class="swal2-input !m-0 !mt-1 !w-full !text-sm" value="' + ((p && p.treatment_right) || '').replace(/"/g, '&quot;') + '"></div>' +
+          '<div><label class="font-semibold">โรคประจำตัว / แพ้ยา</label><input id="ptMed" class="swal2-input !m-0 !mt-1 !w-full !text-sm" value="' + ((p && p.medical_conditions) || '').replace(/"/g, '&quot;') + '"></div>' +
+          '<div><label class="font-semibold">LINE User ID (ถ้ามี)</label><input id="ptLineUid" class="swal2-input !m-0 !mt-1 !w-full !text-sm" placeholder="U..." value="' + ((p && p.line_user_id) || '').replace(/"/g, '&quot;') + '"></div>' +
+        '</div>';
+      const res = await Swal.fire({
+        title: idx >= 0 ? 'แก้ไขทะเบียนผู้ป่วย' : 'เพิ่มทะเบียนผู้ป่วย',
+        html: htmlForm,
+        showCancelButton: true,
+        confirmButtonText: 'บันทึก',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#6d28d9',
+        preConfirm: () => ({
+          id: (p && p.id) || '',
+          patient_name: document.getElementById('ptName').value,
+          phone: document.getElementById('ptPhone').value,
+          treatment_right: document.getElementById('ptRight').value,
+          medical_conditions: document.getElementById('ptMed').value,
+          line_user_id: document.getElementById('ptLineUid').value
+        })
+      });
+      if (!res.isConfirmed) return;
+      callApi('savePatient', { pin: appState.adminPin, payload: res.value }, function(r) {
+        if (!r || !r.success) return showAlert('error', 'บันทึกไม่สำเร็จ', r ? r.message : '');
+        appState.adminPatients = r.patients || [];
+        renderAdminPatients();
+        showAlert('success', 'บันทึกทะเบียนผู้ป่วยเรียบร้อย', '');
+      }, function(err) { showAlert('error', 'เกิดข้อผิดพลาด', String(err)); });
+    }
+
+    async function deletePatientItem(idx) {
+      const p = (window._adminPatientsFiltered || [])[idx];
+      if (!p) return;
+      const cf = await Swal.fire({
+        icon: 'warning',
+        title: 'ลบทะเบียนผู้ป่วย?',
+        text: p.patient_name + ' (' + p.phone + ')',
+        showCancelButton: true,
+        confirmButtonText: 'ลบ',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#e11d48'
+      });
+      if (!cf.isConfirmed) return;
+      callApi('deletePatient', { pin: appState.adminPin, id: p.id }, function(r) {
+        if (!r || !r.success) return showAlert('error', 'ลบไม่สำเร็จ', r ? r.message : '');
+        appState.adminPatients = r.patients || [];
+        renderAdminPatients();
+      }, function(err) { showAlert('error', 'เกิดข้อผิดพลาด', String(err)); });
     }
 
     function renderAdminHolidays() {
