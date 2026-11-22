@@ -461,6 +461,34 @@
               </div>
               <textarea id="bcText" rows="4" placeholder="พิมพ์ข้อความประกาศที่นี่ เช่น 🦷 แจ้งเปิดให้บริการขูดหินปูน..." class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-500"></textarea>
             </div>
+            <div class="grid sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">รูปแบบการแสดงผล</label>
+                <select id="bcStyle" onchange="togglePosterOptions()" class="w-full rounded-xl border border-slate-200 px-3 py-2 bg-white">
+                  <option value="poster">🖼️ เทมเพลต 1: โปสเตอร์เต็มจอ + กดรูปเปิดลิงก์</option>
+                  <option value="grid2">🧩 เทมเพลต 2: โปสเตอร์ + ปุ่ม 2 ช่อง (ซ้าย–ขวา)</option>
+                  <option value="grid4">🧩 เทมเพลต 3: โปสเตอร์ + ปุ่ม 4 ช่อง (2×2)</option>
+                  <option value="grid6">🧩 เทมเพลต 4: โปสเตอร์ + ปุ่ม 6 ช่อง (3×2)</option>
+                  <option value="normal">💬 เทมเพลต 5: ข้อความ + รูปภาพปกติ</option>
+                </select>
+              </div>
+              <div id="bcAspectWrap">
+                <label class="block font-semibold text-slate-700 mb-1">สัดส่วนภาพโปสเตอร์</label>
+                <select id="bcAspect" class="w-full rounded-xl border border-slate-200 px-3 py-2 bg-white">
+                  <option value="1:1">1:1 จัตุรัส (1040 × 1040 px)</option>
+                  <option value="4:5" selected>4:5 แนวตั้ง (1040 × 1300 px)</option>
+                  <option value="16:9">16:9 แนวนอน (1040 × 585 px)</option>
+                </select>
+              </div>
+            </div>
+            <div id="bcLinkWrap">
+              <label class="block font-semibold text-slate-700 mb-1">🔗 ลิงก์ปลายทางเมื่อคนไข้กดที่รูปภาพ</label>
+              <input type="url" id="bcLinkUrl" value="https://liff.line.me/2012609917-vBlRgro4" placeholder="https://..." class="w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-purple-500">
+            </div>
+            <div id="bcSlotsWrap" class="hidden space-y-2 bg-purple-50/70 border border-purple-200 rounded-2xl p-3">
+              <div class="font-bold text-purple-900">🎛️ กำหนดปุ่มตามเทมเพลต (เลือกเป็น ลิงก์ หรือ ข้อความ)</div>
+              <div id="bcSlotsContainer" class="grid sm:grid-cols-2 gap-2"></div>
+            </div>
             <div>
               <label class="block font-semibold text-slate-700 mb-1">ลิงก์รูปภาพประกอบ (ถ้ามี — ต้องเป็น https://)</label>
               <input type="url" id="bcImageUrl" oninput="previewBcImage()" placeholder="https://..." class="w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-purple-500">
@@ -1613,6 +1641,57 @@
     }
 
 
+
+    function renderBroadcastSlots(count) {
+      const box = document.getElementById('bcSlotsContainer');
+      if (!box) return;
+      const presets = [
+        { label: '🏥 สิทธิบัตรทอง', type: 'message', val: 'สิทธิบัตรทอง' },
+        { label: '🪥 แปรงฟัน 2-2-2', type: 'message', val: 'แปรงฟัน 2-2-2' },
+        { label: '🤰 หญิงตั้งครรภ์', type: 'message', val: 'ตั้งครรภ์' },
+        { label: '👴 ผู้สูงอายุ', type: 'message', val: 'ผู้สูงอายุ' },
+        { label: '📅 จองคิวทันตกรรม', type: 'uri', val: 'https://liff.line.me/2012609917-vBlRgro4' },
+        { label: '⭐ ประเมินบริการ', type: 'uri', val: 'https://liff.line.me/2012609917-vBlRgro4?tab=feedback' }
+      ];
+      let out = '';
+      for (let i = 0; i < count; i++) {
+        const p = presets[i] || { label: 'ปุ่มที่ ' + (i + 1), type: 'message', val: '' };
+        out += '<div class="bg-white border border-purple-200 rounded-xl p-2.5 space-y-1.5">' +
+          '<div class="font-semibold text-purple-800">ช่องที่ ' + (i + 1) + '</div>' +
+          '<input type="text" id="bcSlotLabel_' + i + '" value="' + p.label + '" placeholder="ชื่อปุ่ม (ไม่เกิน 20 ตัวอักษร)" class="w-full rounded-lg border border-slate-200 px-2 py-1">' +
+          '<select id="bcSlotType_' + i + '" class="w-full rounded-lg border border-slate-200 px-2 py-1 bg-white">' +
+            '<option value="message"' + (p.type === 'message' ? ' selected' : '') + '>💬 ส่งข้อความเข้าแชท (Text)</option>' +
+            '<option value="uri"' + (p.type === 'uri' ? ' selected' : '') + '>🔗 เปิดลิงก์ (URL)</option>' +
+          '</select>' +
+          '<input type="text" id="bcSlotVal_' + i + '" value="' + p.val + '" placeholder="ข้อความ หรือ https://..." class="w-full rounded-lg border border-slate-200 px-2 py-1">' +
+        '</div>';
+      }
+      box.innerHTML = out;
+    }
+
+    function collectBroadcastSlots() {
+      const style = document.getElementById('bcStyle').value;
+      const count = style === 'grid2' ? 2 : (style === 'grid4' ? 4 : (style === 'grid6' ? 6 : 0));
+      const arr = [];
+      for (let i = 0; i < count; i++) {
+        const l = document.getElementById('bcSlotLabel_' + i);
+        const t = document.getElementById('bcSlotType_' + i);
+        const v = document.getElementById('bcSlotVal_' + i);
+        if (l && t && v) arr.push({ label: l.value.trim(), type: t.value, value: v.value.trim() });
+      }
+      return arr;
+    }
+
+    function togglePosterOptions() {
+      const style = document.getElementById('bcStyle').value;
+      const hasPoster = style !== 'normal';
+      document.getElementById('bcAspectWrap').classList.toggle('hidden', !hasPoster);
+      document.getElementById('bcLinkWrap').classList.toggle('hidden', style !== 'poster');
+      const count = style === 'grid2' ? 2 : (style === 'grid4' ? 4 : (style === 'grid6' ? 6 : 0));
+      document.getElementById('bcSlotsWrap').classList.toggle('hidden', count === 0);
+      if (count > 0) renderBroadcastSlots(count);
+    }
+
     function testBroadcast() {
       const text = document.getElementById('bcText').value.trim();
       const image_url = document.getElementById('bcImageUrl').value.trim();
@@ -1622,7 +1701,7 @@
       const btn = document.getElementById('bcTestBtn');
       btn.disabled = true;
       btn.textContent = 'กำลังส่งทดสอบ...';
-      callApi('testBroadcastToAdmin', { pin: appState.adminPin, payload: { text: text, image_url: image_url } }, function(res) {
+      callApi('testBroadcastToAdmin', { pin: appState.adminPin, payload: { text: text, image_url: image_url, style: document.getElementById('bcStyle').value, link_url: document.getElementById('bcLinkUrl').value.trim(), aspect_ratio: document.getElementById('bcAspect').value, slots: collectBroadcastSlots() } }, function(res) {
           btn.disabled = false;
           btn.textContent = '🧪 ทดสอบส่งเข้าแชทเจ้าหน้าที่';
           if (!res || !res.success) return showAlert('error', 'ทดสอบไม่สำเร็จ', res ? res.message : '');
@@ -1657,7 +1736,7 @@
       btn.disabled = true;
       btn.textContent = 'กำลังดำเนินการ...';
 
-      callApi('scheduleBroadcastMessage', { pin: appState.adminPin, payload: { text: text, image_url: image_url, mode: mode, send_at: send_at } }, function(res) {
+      callApi('scheduleBroadcastMessage', { pin: appState.adminPin, payload: { text: text, image_url: image_url, mode: mode, send_at: send_at, style: document.getElementById('bcStyle').value, link_url: document.getElementById('bcLinkUrl').value.trim(), aspect_ratio: document.getElementById('bcAspect').value, slots: collectBroadcastSlots() } }, function(res) {
           btn.disabled = false;
           btn.textContent = '📢 ส่งบรอดแคสต์ / ตั้งเวลาส่ง';
           if (!res || !res.success) return showAlert('error', 'ดำเนินการไม่สำเร็จ', res ? res.message : '');
